@@ -1,38 +1,57 @@
 import React, { useState } from "react";
 import './App.css'; // CSS 파일 적용
+import axios from 'axios';
 
 function ImageUploader() {
-  const [imagePath, setImagePath] = useState("");
-  const [maskImagePath, setMaskImagePath] = useState("");
   const [singleImageFile, setSingleImageFile] = useState(null);
   const [hdf5Path, setHdf5Path] = useState("");
   const [fileData, setFileData] = useState(null);
-
+  const [file, setFile] = useState(null);
+  const [inputValue, setInputValue] = useState('');
   const handleFileChange = (event) => {
-    const file = event.target.files[0];
+    setFile(event.target.files[0]);
+    console.log(file)
     if (file) {
-      // FileReader를 사용해 파일 읽기
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result;
-        // 세션 스토리지에 파일 저장
-        sessionStorage.setItem("uploadedFile", base64String);
-        setFileData(base64String);
-      };
-      reader.readAsDataURL(file); // 파일을 base64로 인코딩
+        // FileReader 사용하여 파일을 base64로 변환
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64String = reader.result;
+            sessionStorage.setItem("uploadedFile", base64String);
+            setFileData(base64String);  // 파일 데이터를 상태로 저장
+        };
+        reader.readAsDataURL(file);
     }
-  };
-  const handleGenerate = () => {
-    console.log("Generate clicked");
-    console.log("Image Path: ", imagePath);
-    console.log("Mask Image Path: ", maskImagePath);
-  };
+};
+const handleGenerate = async (e) => {
+  e.preventDefault();
+  
+  if (!file) {
+      alert("No file selected");
+      return;
+  }
+  if(file){
+    
+    const uploadFile = file
+    const formData = new FormData()
+    formData.append('files',uploadFile)
+    console.log(formData)
+    await axios({
+    method: 'post',
+    url: 'http://localhost:5000/images',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  }
+};
+
 
   const handleLoadFile = () => {
     console.log("Load file clicked");
     console.log("Single Image File: ", singleImageFile);
   };
-
   const handleRetrain = () => {
     console.log("Retrain clicked");
     console.log("HDF5 Path: ", hdf5Path);
@@ -44,7 +63,7 @@ function ImageUploader() {
       <div>
       <input type="file" onChange={handleFileChange} />
       {fileData && <img src={fileData} alt="Uploaded" width="200px" />}
-    </div>
+    {/* </div>
         <h3>1. It loads the image paths and shows the results.</h3>
         <div className="radio-group">
           <label><input type="radio" name="format" value="jpeg" /> JPEG</label>
@@ -66,8 +85,8 @@ function ImageUploader() {
             value={maskImagePath}
             onChange={(e) => setMaskImagePath(e.target.value)}
             placeholder="Insert mask image path"
-          />
-        </div>
+          />*/}
+        </div> 
         <button className="generate-button" onClick={handleGenerate}>Generate</button>
       </div>
 
